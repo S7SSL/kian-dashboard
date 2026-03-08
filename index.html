@@ -253,8 +253,88 @@
       margin-bottom: 16px;
     }
 
+    /* FinTwit sentiment */
+    .fintwit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .fintwit-card {
+      background: #12121a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 20px 22px;
+    }
+
+    .fintwit-card .ft-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .fintwit-card .ft-ticker {
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .fintwit-card .ft-source {
+      font-size: 10px;
+      color: #444;
+    }
+
+    .fintwit-bar-wrap {
+      height: 8px;
+      background: #1e1e2e;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .fintwit-bar-fill {
+      height: 100%;
+      background: linear-gradient(to right, #22c55e, #16a34a);
+      border-radius: 99px;
+      transition: width 0.6s ease;
+    }
+
+    .fintwit-pcts {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .fintwit-pcts .bull { color: #22c55e; font-weight: 600; }
+    .fintwit-pcts .bear { color: #ef4444; font-weight: 600; }
+
+    .fintwit-posts {
+      border-top: 1px solid #1e1e2e;
+      padding-top: 10px;
+      max-height: 80px;
+      overflow: hidden;
+    }
+
+    .fintwit-post {
+      font-size: 11px;
+      color: #555;
+      line-height: 1.5;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fintwit-post .bull-dot { color: #22c55e; }
+    .fintwit-post .bear-dot { color: #ef4444; }
+
     @media (max-width: 640px) {
-      .futures-grid, .signal-row { grid-template-columns: 1fr; }
+      .futures-grid, .signal-row, .fintwit-grid { grid-template-columns: 1fr; }
       .fg-bar { flex-direction: column; gap: 16px; }
       .fg-score { font-size: 48px; }
       header { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -319,6 +399,31 @@ function fgLabel(score) {
 function fmt(n) {
   return n >= 1000 ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) 
                    : n.toFixed(2);
+}
+
+async function fetchFintwit(symbol) {
+  try {
+    const url = `https://api.stocktwits.com/api/2/streams/symbol/${symbol}.json`;
+    const r = await fetch(CORS_PROXY + encodeURIComponent(url));
+    const d = await r.json();
+    const msgs = d.messages || [];
+    let bull = 0, bear = 0;
+    const posts = [];
+    for (const m of msgs) {
+      const sent = m?.entities?.sentiment?.basic;
+      if (sent === 'Bullish') bull++;
+      else if (sent === 'Bearish') bear++;
+      posts.push({ body: m.body?.substring(0, 90), sentiment: sent });
+    }
+    const total = bull + bear;
+    return {
+      bull, bear,
+      bullPct: total ? Math.round(bull / total * 100) : 50,
+      totalPosts: msgs.length,
+      votes: total,
+      posts: posts.slice(0, 4)
+    };
+  } catch { return null; }
 }
 
 async function fetchFG() {
@@ -420,10 +525,19 @@ async function init() {
   const upd = document.getElementById('last-updated');
 
   // Fetch all data in parallel
-  const [fg, ...tickerData] = await Promise.all([
+  const [fg, ftQQQ, ftSPY, ftIWM, ...tickerData] = await Promise.all([
     fetchFG(),
+    fetchFintwit('QQQ'),
+    fetchFintwit('SPY'),
+    fetchFintwit('IWM'),
     ...TICKERS.map(t => fetchTicker(t.symbol))
   ]);
+
+  const fintwitData = [
+    { label: 'NQ — FinTwit', proxy: 'QQQ', data: ftQQQ },
+    { label: 'ES — FinTwit', proxy: 'SPY', data: ftSPY },
+    { label: 'RTY — FinTwit', proxy: 'IWM', data: ftIWM },
+  ];
 
   const futures = TICKERS.map((t, i) => ({ ...t, data: tickerData[i] }));
   const now = new Date();
@@ -486,6 +600,45 @@ async function init() {
       <div class="signal-card">
         <div class="sig-ticker">${f.short} Bias</div>
         <div class="sig-label ${sig.cls}">${sig.label}</div>
+      </div>`;
+  }
+  html += '</div>';
+
+  // FinTwit sentiment
+  html += '<div class="brief-panel" style="margin-bottom:24px"><h2>🐦 FinTwit Sentiment (StockTwits)</h2></div>';
+  html = html.replace('<div class="brief-panel" style="margin-bottom:24px"><h2>🐦 FinTwit Sentiment (StockTwits)</h2></div>', '');
+
+  html += '<div class="fintwit-grid">';
+  for (const ft of fintwitData) {
+    const d = ft.data;
+    if (!d) {
+      html += `<div class="fintwit-card"><div class="ft-header"><span class="ft-ticker">${ft.label}</span></div><div style="color:#444;font-size:12px">Unavailable</div></div>`;
+      continue;
+    }
+    const bullPct = d.bullPct;
+    const bearPct = 100 - bullPct;
+    const dominance = bullPct >= 60 ? `<span style="color:#22c55e">Bullish</span>` : bullPct <= 40 ? `<span style="color:#ef4444">Bearish</span>` : `<span style="color:#f59e0b">Mixed</span>`;
+    const postsHtml = d.posts.map(p => {
+      const dot = p.sentiment === 'Bullish' ? '<span class="bull-dot">▲</span>' : p.sentiment === 'Bearish' ? '<span class="bear-dot">▼</span>' : '·';
+      const clean = p.body?.replace(/</g,'&lt;').replace(/>/g,'&gt;') || '';
+      return `<div class="fintwit-post">${dot} ${clean}</div>`;
+    }).join('');
+
+    html += `
+      <div class="fintwit-card">
+        <div class="ft-header">
+          <span class="ft-ticker">${ft.label}</span>
+          <span class="ft-source">via $${ft.proxy} · ${d.votes} votes</span>
+        </div>
+        <div class="fintwit-bar-wrap">
+          <div class="fintwit-bar-fill" style="width:${bullPct}%"></div>
+        </div>
+        <div class="fintwit-pcts">
+          <span class="bull">▲ ${bullPct}% Bull</span>
+          <span>${dominance}</span>
+          <span class="bear">${bearPct}% Bear ▼</span>
+        </div>
+        <div class="fintwit-posts">${postsHtml}</div>
       </div>`;
   }
   html += '</div>';
