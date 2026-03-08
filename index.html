@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kian's Market Brief</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: #0a0a0f;
+      color: #e8e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 24px 32px 16px;
+      border-bottom: 1px solid #1e1e2e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    header .subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    #last-updated {
+      font-size: 11px;
+      color: #555;
+      text-align: right;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+
+    /* Fear & Greed */
+    .fg-bar {
+      background: #12121a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .fg-score {
+      font-size: 64px;
+      font-weight: 700;
+      line-height: 1;
+      min-width: 100px;
+    }
+
+    .fg-details { flex: 1; }
+
+    .fg-label {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .fg-track {
+      height: 8px;
+      background: linear-gradient(to right, #dc2626, #f59e0b, #22c55e);
+      border-radius: 99px;
+      position: relative;
+      margin-bottom: 8px;
+    }
+
+    .fg-needle {
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: -3px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.2);
+      transition: left 0.6s ease;
+    }
+
+    .fg-range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #555;
+    }
+
+    .fg-meta { font-size: 12px; color: #555; }
+
+    /* Futures grid */
+    .futures-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .future-card {
+      background: #12121a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 22px 24px;
+      transition: border-color 0.2s;
+    }
+
+    .future-card:hover { border-color: #2e2e4e; }
+
+    .future-card .ticker {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .future-card .name {
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 14px;
+    }
+
+    .future-card .price {
+      font-size: 30px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .future-card .change {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .future-card .range {
+      margin-top: 12px;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    .future-card .mini-chart {
+      margin-top: 16px;
+      height: 50px;
+    }
+
+    .up { color: #22c55e; }
+    .down { color: #ef4444; }
+    .neutral { color: #f59e0b; }
+
+    /* Brief panel */
+    .brief-panel {
+      background: #12121a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+    }
+
+    .brief-panel h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 16px;
+    }
+
+    .brief-text {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #ccc;
+    }
+
+    .brief-text strong { color: #fff; }
+
+    /* Signal bar */
+    .signal-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .signal-card {
+      background: #12121a;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-align: center;
+    }
+
+    .signal-card .sig-ticker {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .signal-card .sig-label {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .sig-long { color: #22c55e; }
+    .sig-short { color: #ef4444; }
+    .sig-neutral { color: #f59e0b; }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 80px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .dot-pulse {
+      display: inline-block;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    .error-msg {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #ef4444;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .futures-grid, .signal-row { grid-template-columns: 1fr; }
+      .fg-bar { flex-direction: column; gap: 16px; }
+      .fg-score { font-size: 48px; }
+      header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📈 Kian's Market Brief</h1>
+    <div class="subtitle">NQ · ES · RTY — Daily Futures Snapshot</div>
+  </div>
+  <div id="last-updated">Loading...</div>
+</header>
+
+<div class="container" id="app">
+  <div class="loading">
+    <span class="dot-pulse">Fetching market data...</span>
+  </div>
+</div>
+
+<script>
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const FG_URL = 'https://api.alternative.me/fng/?limit=1';
+const YF_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+
+const TICKERS = [
+  { symbol: 'NQ=F',  name: 'Nasdaq 100 Futures',   short: 'NQ' },
+  { symbol: 'ES=F',  name: 'S&P 500 Futures',       short: 'ES' },
+  { symbol: 'RTY=F', name: 'Russell 2000 Futures',  short: 'RTY' }
+];
+
+function colorClass(val) {
+  if (val > 0.15) return 'up';
+  if (val < -0.15) return 'down';
+  return 'neutral';
+}
+
+function signalLabel(pct) {
+  if (pct > 0.3) return { label: '▲ LONG BIAS', cls: 'sig-long' };
+  if (pct < -0.3) return { label: '▼ SHORT BIAS', cls: 'sig-short' };
+  return { label: '◆ NEUTRAL', cls: 'sig-neutral' };
+}
+
+function fgColor(score) {
+  if (score <= 25) return '#ef4444';
+  if (score <= 45) return '#f97316';
+  if (score <= 55) return '#f59e0b';
+  if (score <= 75) return '#84cc16';
+  return '#22c55e';
+}
+
+function fgLabel(score) {
+  if (score <= 25) return 'Extreme Fear';
+  if (score <= 45) return 'Fear';
+  if (score <= 55) return 'Neutral';
+  if (score <= 75) return 'Greed';
+  return 'Extreme Greed';
+}
+
+function fmt(n) {
+  return n >= 1000 ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) 
+                   : n.toFixed(2);
+}
+
+async function fetchFG() {
+  try {
+    const r = await fetch(CORS_PROXY + encodeURIComponent(FG_URL));
+    const d = await r.json();
+    return parseInt(d.data[0].value);
+  } catch { return null; }
+}
+
+async function fetchTicker(symbol) {
+  try {
+    const url = `${YF_BASE}${symbol}?interval=1d&range=5d`;
+    const r = await fetch(CORS_PROXY + encodeURIComponent(url));
+    const d = await r.json();
+    const result = d.chart.result[0];
+    const meta = result.meta;
+    const closes = result.indicators.quote[0].close.filter(Boolean);
+    const prev = closes[closes.length - 2];
+    const curr = meta.regularMarketPrice || closes[closes.length - 1];
+    const chg = curr - prev;
+    const pct = (chg / prev) * 100;
+    return {
+      price: curr,
+      change: chg,
+      changePct: pct,
+      dayHigh: meta.regularMarketDayHigh,
+      dayLow: meta.regularMarketDayLow,
+      prevClose: prev,
+      closes
+    };
+  } catch { return null; }
+}
+
+function buildBrief(fg, futures) {
+  const parts = [];
+  const date = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  parts.push(`<strong>${date}</strong> — `);
+  
+  if (fg !== null) {
+    parts.push(`Fear & Greed is at <strong>${fg}/100 (${fgLabel(fg)})</strong>. `);
+  }
+
+  const downs = futures.filter(f => f.data && f.data.changePct < -0.5);
+  const ups   = futures.filter(f => f.data && f.data.changePct > 0.5);
+
+  if (downs.length === 3) {
+    parts.push(`All three futures are in the red — broad market weakness. Consider sizing down. `);
+  } else if (ups.length === 3) {
+    parts.push(`All three futures are positive — broad market strength. `);
+  } else if (downs.length > 0) {
+    const names = downs.map(f => f.short).join(', ');
+    parts.push(`${names} showing weakness. Mixed signals — watch for confirmation. `);
+  }
+
+  const rty = futures.find(f => f.short === 'RTY');
+  const nq  = futures.find(f => f.short === 'NQ');
+  if (rty?.data && nq?.data) {
+    const spread = rty.data.changePct - nq.data.changePct;
+    if (spread < -1.5) parts.push(`RTY significantly lagging NQ — risk-off rotation. `);
+    if (spread > 1.5)  parts.push(`RTY outpacing NQ — risk-on, small caps leading. `);
+  }
+
+  if (fg !== null && fg <= 25) parts.push(`Extreme fear often marks capitulation — watch for reversal signals.`);
+  if (fg !== null && fg >= 75) parts.push(`Extreme greed — be cautious of crowded longs.`);
+
+  return parts.join('');
+}
+
+function miniChart(canvasId, closes, color) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: closes.map((_, i) => i),
+      datasets: [{
+        data: closes,
+        borderColor: color,
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.4,
+        fill: true,
+        backgroundColor: color + '15'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } },
+      animation: false
+    }
+  });
+}
+
+async function init() {
+  const app = document.getElementById('app');
+  const upd = document.getElementById('last-updated');
+
+  // Fetch all data in parallel
+  const [fg, ...tickerData] = await Promise.all([
+    fetchFG(),
+    ...TICKERS.map(t => fetchTicker(t.symbol))
+  ]);
+
+  const futures = TICKERS.map((t, i) => ({ ...t, data: tickerData[i] }));
+  const now = new Date();
+  upd.textContent = `Updated ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT`;
+
+  let html = '';
+
+  // Fear & Greed
+  const fgScore = fg ?? 50;
+  const fgCol = fgColor(fgScore);
+  const fgPct = fgScore;
+  html += `
+    <div class="fg-bar">
+      <div class="fg-score" style="color:${fgCol}">${fgScore}</div>
+      <div class="fg-details">
+        <div class="fg-label" style="color:${fgCol}">${fgLabel(fgScore)}</div>
+        <div class="fg-track">
+          <div class="fg-needle" style="left:${fgPct}%"></div>
+        </div>
+        <div class="fg-range-labels">
+          <span>Extreme Fear</span><span>Fear</span><span>Neutral</span><span>Greed</span><span>Extreme Greed</span>
+        </div>
+      </div>
+      <div class="fg-meta">Fear &amp; Greed Index<br>alternative.me</div>
+    </div>`;
+
+  // Futures cards
+  html += '<div class="futures-grid">';
+  for (const f of futures) {
+    if (!f.data) {
+      html += `<div class="future-card"><div class="ticker">${f.short}</div><div class="name">${f.name}</div><div style="color:#555;font-size:13px;margin-top:20px">Data unavailable</div></div>`;
+      continue;
+    }
+    const d = f.data;
+    const cls = colorClass(d.changePct);
+    const sign = d.change >= 0 ? '+' : '';
+    const chartColor = d.changePct >= 0 ? '#22c55e' : '#ef4444';
+    html += `
+      <div class="future-card">
+        <div class="ticker">${f.short}</div>
+        <div class="name">${f.name}</div>
+        <div class="price">${fmt(d.price)}</div>
+        <div class="change ${cls}">${sign}${fmt(d.change)} (${sign}${d.changePct.toFixed(2)}%)</div>
+        <div class="range">
+          H: ${fmt(d.dayHigh ?? d.price)} &nbsp;·&nbsp; L: ${fmt(d.dayLow ?? d.price)}<br>
+          Prev close: ${fmt(d.prevClose)}
+        </div>
+        <div class="mini-chart">
+          <canvas id="chart-${f.short}" height="50"></canvas>
+        </div>
+      </div>`;
+  }
+  html += '</div>';
+
+  // Signal row
+  html += '<div class="signal-row">';
+  for (const f of futures) {
+    const sig = f.data ? signalLabel(f.data.changePct) : { label: '— N/A', cls: 'sig-neutral' };
+    html += `
+      <div class="signal-card">
+        <div class="sig-ticker">${f.short} Bias</div>
+        <div class="sig-label ${sig.cls}">${sig.label}</div>
+      </div>`;
+  }
+  html += '</div>';
+
+  // Daily brief
+  html += `
+    <div class="brief-panel">
+      <h2>📋 Daily Brief</h2>
+      <div class="brief-text">${buildBrief(fg, futures)}</div>
+    </div>`;
+
+  app.innerHTML = html;
+
+  // Render mini charts
+  for (const f of futures) {
+    if (f.data?.closes) {
+      const color = f.data.changePct >= 0 ? '#22c55e' : '#ef4444';
+      miniChart(`chart-${f.short}`, f.data.closes, color);
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

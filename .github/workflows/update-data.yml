@@ -1,0 +1,32 @@
+name: Update Market Data
+
+on:
+  schedule:
+    # Run Mon-Fri at 14:00 UTC (matches Kian's daily brief time)
+    - cron: '0 14 * * 1-5'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests yfinance
+
+      - name: Fetch market data
+        run: python scripts/fetch_data.py
+
+      - name: Commit data
+        run: |
+          git config user.name "Kian's Dashboard Bot"
+          git config user.email "bot@kian-dashboard"
+          git add data/latest.json
+          git diff --staged --quiet || git commit -m "chore: update market data $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
