@@ -243,6 +243,62 @@
       50% { opacity: 1; }
     }
 
+    /* VERDICT */
+    .verdict-bar {
+      background: #12121a;
+      border: 1px solid #1e1e2e;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .verdict-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .verdict-word {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .verdict-bull { color: #22c55e; }
+    .verdict-bear { color: #ef4444; }
+    .verdict-mixed { color: #f59e0b; }
+
+    .verdict-signals {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .verdict-signal {
+      text-align: center;
+    }
+
+    .verdict-signal .vs-label {
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 4px;
+    }
+
+    .verdict-signal .vs-val {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
     .error-msg {
       background: rgba(239,68,68,0.1);
       border: 1px solid rgba(239,68,68,0.3);
@@ -544,6 +600,53 @@ async function init() {
   upd.textContent = `Updated ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT`;
 
   let html = '';
+
+  // === VERDICT ===
+  let score = 0; let signals = 0;
+
+  // Signal 1: Fear & Greed (weight: 1)
+  if (fg !== null) {
+    score += fg >= 60 ? 1 : fg <= 40 ? -1 : 0;
+    signals++;
+  }
+
+  // Signal 2: FinTwit average bull% (weight: 2 — this is Kian's key signal)
+  const ftAll = [ftQQQ, ftSPY, ftIWM].filter(Boolean);
+  if (ftAll.length) {
+    const avgBull = ftAll.reduce((a, b) => a + b.bullPct, 0) / ftAll.length;
+    score += avgBull >= 60 ? 2 : avgBull <= 40 ? -2 : 0;
+    signals += 2;
+  }
+
+  // Signal 3: Futures direction (weight: 1)
+  const validFutures = futures.filter(f => f.data);
+  if (validFutures.length) {
+    const avgPct = validFutures.reduce((a, f) => a + f.data.changePct, 0) / validFutures.length;
+    score += avgPct > 0.2 ? 1 : avgPct < -0.2 ? -1 : 0;
+    signals++;
+  }
+
+  const verdictRatio = signals ? score / signals : 0;
+  const verdict = verdictRatio > 0.2 ? 'BULLISH' : verdictRatio < -0.2 ? 'BEARISH' : 'MIXED';
+  const verdictCls = verdict === 'BULLISH' ? 'verdict-bull' : verdict === 'BEARISH' ? 'verdict-bear' : 'verdict-mixed';
+  const verdictIcon = verdict === 'BULLISH' ? '▲' : verdict === 'BEARISH' ? '▼' : '◆';
+
+  // Build signal pills
+  const ftAvgBull = ftAll.length ? Math.round(ftAll.reduce((a,b)=>a+b.bullPct,0)/ftAll.length) : null;
+  const avgFutPct = validFutures.length ? (validFutures.reduce((a,f)=>a+f.data.changePct,0)/validFutures.length).toFixed(2) : null;
+
+  html += `
+    <div class="verdict-bar">
+      <div>
+        <div class="verdict-label">Overall Market Sentiment</div>
+        <div class="verdict-word ${verdictCls}">${verdictIcon} ${verdict}</div>
+      </div>
+      <div class="verdict-signals">
+        ${fg !== null ? `<div class="verdict-signal"><div class="vs-label">Fear &amp; Greed</div><div class="vs-val" style="color:${fgColor(fg)}">${fg}/100</div></div>` : ''}
+        ${ftAvgBull !== null ? `<div class="verdict-signal"><div class="vs-label">FinTwit Bull</div><div class="vs-val" style="color:${ftAvgBull>=60?'#22c55e':ftAvgBull<=40?'#ef4444':'#f59e0b'}">${ftAvgBull}%</div></div>` : ''}
+        ${avgFutPct !== null ? `<div class="verdict-signal"><div class="vs-label">Futures Avg</div><div class="vs-val" style="color:${parseFloat(avgFutPct)>=0?'#22c55e':'#ef4444'}">${parseFloat(avgFutPct)>=0?'+':''}${avgFutPct}%</div></div>` : ''}
+      </div>
+    </div>`;
 
   // Fear & Greed
   const fgScore = fg ?? 50;
