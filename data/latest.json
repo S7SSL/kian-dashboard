@@ -1,5 +1,51 @@
 {
-  "updated": "placeholder",
-  "fearGreed": null,
-  "futures": {}
+  "updated": "2026-03-16T17:39:46.679233+00:00",
+  "fearGreed": {
+    "score": 23,
+    "label": "Extreme Fear"
+  },
+  "futures": {
+    "NQ": {
+      "price": 24912.5,
+      "change": 518.25,
+      "changePct": 2.1245,
+      "dayHigh": 24764.5,
+      "dayLow": 24278.0,
+      "prevClose": 24394.25,
+      "closes": [
+        24983.5,
+        24560.0,
+        24394.25,
+        24912.5
+      ]
+    },
+    "ES": {
+      "price": 6756.5,
+      "change": 120.5,
+      "changePct": 1.8159,
+      "dayHigh": 6728.0,
+      "dayLow": 6608.5,
+      "prevClose": 6636.0,
+      "closes": [
+        6779.5,
+        6677.5,
+        6636.0,
+        6756.5
+      ]
+    },
+    "RTY": {
+      "price": 2524.9,
+      "change": 44.0,
+      "changePct": 1.7735,
+      "dayHigh": 2546.0,
+      "dayLow": 2479.0,
+      "prevClose": 2480.9,
+      "closes": [
+        2545.0,
+        2491.0,
+        2480.9,
+        2524.9
+      ]
+    }
+  }
 }
