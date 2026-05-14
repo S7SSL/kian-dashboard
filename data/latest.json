@@ -1,50 +1,50 @@
 {
-  "updated": "2026-05-13T16:19:05.164008+00:00",
+  "updated": "2026-05-14T16:09:44.045463+00:00",
   "fearGreed": {
-    "score": 42,
+    "score": 34,
     "label": "Fear"
   },
   "futures": {
     "NQ": {
-      "price": 29362.25,
-      "change": 192.25,
-      "changePct": 0.6591,
-      "dayHigh": 29447.0,
-      "dayLow": 29055.5,
-      "prevClose": 29170.0,
+      "price": 29755.5,
+      "change": 276.25,
+      "changePct": 0.9371,
+      "dayHigh": 29773.75,
+      "dayLow": 29448.25,
+      "prevClose": 29479.25,
       "closes": [
-        29332.5,
         29424.0,
         29170.0,
-        29362.25
+        29479.25,
+        29755.5
       ]
     },
     "ES": {
-      "price": 7447.5,
-      "change": 21.0,
-      "changePct": 0.2828,
-      "dayHigh": 7454.25,
-      "dayLow": 7399.0,
-      "prevClose": 7426.5,
+      "price": 7537.0,
+      "change": 67.5,
+      "changePct": 0.9037,
+      "dayHigh": 7537.5,
+      "dayLow": 7471.0,
+      "prevClose": 7469.5,
       "closes": [
-        7419.0,
         7436.75,
         7426.5,
-        7447.5
+        7469.5,
+        7537.0
       ]
     },
     "RTY": {
-      "price": 2839.4,
-      "change": -11.0,
-      "changePct": -0.3859,
-      "dayHigh": 2862.4,
-      "dayLow": 2824.1,
-      "prevClose": 2850.4,
+      "price": 2873.8,
+      "change": 21.5,
+      "changePct": 0.7538,
+      "dayHigh": 2875.2,
+      "dayLow": 2844.5,
+      "prevClose": 2852.3,
       "closes": [
-        2867.6,
         2878.9,
         2850.4,
-        2839.4
+        2852.3,
+        2873.8
       ]
     }
   }
